@@ -1,4 +1,5 @@
 # lwheng.com
 
-![{{alt text}}](https://github.com/lwheng/lwheng.com/workflows/workflow/badge.svg)
+![main](https://github.com/lwheng/lwheng.com/actions/workflows/main.yml/badge.svg)
+
 
