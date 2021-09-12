@@ -40,4 +40,4 @@ jobs:
 
       - name: Push
         run: |-
-          gsutil -m rsync -R output gs://${{ secrets.GCS_BUCKET }}
+          gsutil -m rsync -R release gs://${{ secrets.GCS_BUCKET }}

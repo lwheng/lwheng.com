@@ -5,3 +5,6 @@ repl-temp-*
 
 # Attempting to exclude all Javascript files
 js
+
+# Release files
+release
