@@ -11,11 +11,18 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy
     steps:
-      - name: Install additional packages
+      - name: Install node/npm packages
         run: |-
           apt get update && apt get install node npm
           npm install elm-format -g
           npm install uglify-js -g
+
+      - name: Install Elm
+        run: |-
+          curl -L -o elm.gz https://github.com/elm/compiler/releases/download/0.19.1/binary-for-linux-64-bit.gz
+          gunzip elm.gz
+          chmod +x elm
+          mv elm /usr/local/bin/
 
       - name: Set up gcloud Cloud SDK environment
         uses: google-github-actions/setup-gcloud@v0.2.0
