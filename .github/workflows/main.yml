@@ -14,6 +14,7 @@ jobs:
       - name: Install additional packages
         run: |-
           apt get update && apt get install node npm
+          npm install elm-format -g
           npm install uglify-js -g
 
       - name: Set up gcloud Cloud SDK environment
