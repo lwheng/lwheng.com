@@ -26,4 +26,5 @@ jobs:
 
       - name: Build
         run: |-
+          sed 's/SECRETS_GCS_HOST/${{ secrets.GCS_HOST }}/; s/SECRETS_GCS_API_KEY/${{ secrets.GCS_API_KEY }}/' index.html.template > index.html
           make
