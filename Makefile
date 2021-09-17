@@ -1,10 +1,13 @@
-elmjs=elm.js
-elmminjs=elm.min.js
+elmjs := elm.js
+elmminjs := elm.min.js
+
+secret_GCS_HOST := $(shell cat ~/.secret/secret_GCS_HOST)
+secret_GCS_API_KEY := $(shell cat ~/.secret/secret_GCS_API_KEY)
 
 # `make` will run the first target as default
 all: create_dir format build uglify move_artefacts
 
-debug: create_dir format build_debug uglify move_artefacts
+debug: create_dir format build_debug uglify setup_index_local move_artefacts
 
 # <target2>: <target1>
 # <target2> depends on <target1>
@@ -27,13 +30,16 @@ uglify:
 	@echo "...Done!"
 
 move_artefacts:
-	@cp index.html release/index.html
-	@cp 404.html release/404.html
+	@mv index.html release/index.html
+	@cp templates/404.html.template release/404.html
 	@mv ${elmjs} release/js/${elmjs}
 	@mv ${elmminjs} release/js/${elmminjs}
 
 local: debug
-	cd release && python -m SimpleHTTPServer 8000
+	@cd release && python -m SimpleHTTPServer 8000
+
+setup_index_local:
+	@sed 's/SECRETS_GCS_HOST/${secret_GCS_HOST}/; s/SECRETS_GCS_API_KEY/${secret_GCS_API_KEY}/' templates/index.html.template > index.html
 
 clean:
 	@echo "Cleaning up build artefacts..."
