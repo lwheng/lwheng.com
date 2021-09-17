@@ -45,9 +45,10 @@ view : Model -> Browser.Document Msg
 view model =
     { title = "lwheng.com"
     , body =
-        [ E.layout [] <|
-            E.column []
-                [ E.text "Hello, world!"
+        [ E.layout [ E.inFront <| header ] <|
+            E.column [ E.width E.fill ]
+                [ header
+                , E.text "Hello, world!"
                 , E.text "This is a Elm application."
                 , EI.button [ EB.color <| E.rgb255 238 238 238 ] { onPress = Just CallAPI, label = E.text "Click" }
                 , E.text model.greeting
@@ -110,3 +111,14 @@ callAPI model =
         , timeout = Nothing
         , tracker = Nothing
         }
+
+
+header : E.Element Msg
+header =
+    E.row [ E.width E.fill, EB.color (E.rgb255 155 156 179), E.spacing 20, E.padding 30 ]
+        [ E.el [] (E.text "logo")
+        , E.el [ E.alignRight ] (E.text "Home")
+        , E.el [] (E.text "About Us")
+        , E.el [] (E.text "Services")
+        , E.el [] (E.text "Contact Us")
+        ]
