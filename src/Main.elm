@@ -4,6 +4,8 @@ import Browser
 import Browser.Navigation as BN
 import Element as E
 import Element.Background as EB
+import Element.Border as Border
+import Element.Font as Font
 import Element.Input as EI
 import Html
 import Http
@@ -45,16 +47,58 @@ view : Model -> Browser.Document Msg
 view model =
     { title = "lwheng.com"
     , body =
-        [ E.layout [ E.inFront <| header ] <|
+        [ E.layout [ E.inFront header ] <|
             E.column [ E.width E.fill ]
                 [ header
-                , E.text "Hello, world!"
-                , E.text "This is a Elm application."
-                , EI.button [ EB.color <| E.rgb255 238 238 238 ] { onPress = Just CallAPI, label = E.text "Click" }
-                , E.text model.greeting
+                , E.row [ E.width E.fill ]
+                    [ viewGCP model
+                    , viewAWS model
+                    ]
                 ]
         ]
     }
+
+
+viewGCP : Model -> E.Element Msg
+viewGCP model =
+    E.column [ E.width E.fill, E.alignTop ]
+        [ headerGCP
+        , EI.button [ EB.color <| E.rgb255 238 238 238 ] { onPress = Just CallAPI, label = E.text "Click" }
+        , E.text model.greeting
+        ]
+
+
+headerGCP : E.Element Msg
+headerGCP =
+    E.el
+        [ E.width E.fill
+        , E.spacing 20
+        , E.padding 30
+        , Font.center
+        , Font.size 30
+        , Font.shadow { offset = ( 1, 1 ), blur = 2, color = E.rgb255 100 100 100 }
+        ]
+    <|
+        E.text "LEFT"
+
+
+headerAWS : E.Element Msg
+headerAWS =
+    E.el
+        [ E.width E.fill
+        , E.spacing 20
+        , E.padding 30
+        , Font.center
+        , Font.size 30
+        , Font.shadow { offset = ( 1, 1 ), blur = 2, color = E.rgb255 100 100 100 }
+        ]
+    <|
+        E.text "RIGHT"
+
+
+viewAWS : Model -> E.Element Msg
+viewAWS model =
+    E.column [ E.width E.fill, E.alignTop ] [ headerAWS ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -115,10 +159,16 @@ callAPI model =
 
 header : E.Element Msg
 header =
-    E.row [ E.width E.fill, EB.color (E.rgb255 155 156 179), E.spacing 20, E.padding 30 ]
-        [ E.el [] (E.text "logo")
-        , E.el [ E.alignRight ] (E.text "Home")
-        , E.el [] (E.text "About Us")
-        , E.el [] (E.text "Services")
-        , E.el [] (E.text "Contact Us")
+    E.el
+        [ E.width E.fill
+        , E.spacing 20
+        , E.padding 30
+        , Border.innerShadow { offset = ( 1, 1 ), size = 2, blur = 2, color = E.rgba255 100 100 100 0.5 }
+        , EB.color <| E.rgb255 57 144 17
+        , Font.color <| E.rgb255 255 255 255
+        , Font.center
+        , Font.size 30
+        , Font.shadow { offset = ( 1, 1 ), blur = 2, color = E.rgb255 100 100 100 }
         ]
+    <|
+        E.text "Learn Yourself Some Cloud"
