@@ -14,6 +14,7 @@ debug: create_dir format build_debug uglify setup_index_local move_artefacts
 # i.e. <target1> runs first
 create_dir: clean
 	@mkdir -p release/js
+	@mkdir -p release/img
 
 format:
 	@elm-format --yes src
@@ -34,6 +35,7 @@ move_artefacts:
 	@cp templates/404.html.template release/404.html
 	@mv ${elmjs} release/js/${elmjs}
 	@mv ${elmminjs} release/js/${elmminjs}
+	@cp src/img/* release/img/.
 
 local: debug
 	@cd release && python -m SimpleHTTPServer 8000
@@ -43,5 +45,5 @@ setup_index_local:
 
 clean:
 	@echo "Cleaning up build artefacts..."
-	@rm -rf release
+	@rm -rf release/*
 	@echo "...Done!"

@@ -45,60 +45,53 @@ init flags _ _ =
 
 view : Model -> Browser.Document Msg
 view model =
-    { title = "lwheng.com"
+    { title = "lwheng.com - Learn Myself Some Cloud"
     , body =
         [ E.layout [ E.inFront header ] <|
             E.column [ E.width E.fill ]
                 [ header
-                , E.row [ E.width E.fill ]
-                    [ viewGCP model
-                    , viewAWS model
-                    ]
+                , E.row [ E.width E.fill ] [ headerGCP, headerAWS ]
+                , E.row [ E.width E.fill ] [ section_HelloWorld_GCP model, section_HelloWorld_AWS model ]
                 ]
         ]
     }
 
 
-viewGCP : Model -> E.Element Msg
-viewGCP model =
+section_HelloWorld_GCP : Model -> E.Element Msg
+section_HelloWorld_GCP model =
     E.column [ E.width E.fill, E.alignTop ]
-        [ headerGCP
-        , EI.button [ EB.color <| E.rgb255 238 238 238 ] { onPress = Just CallAPI, label = E.text "Click" }
+        [ EI.button [ EB.color <| E.rgb255 238 238 238 ] { onPress = Just CallAPI, label = E.text "Click" }
         , E.text model.greeting
+        ]
+
+
+section_HelloWorld_AWS : Model -> E.Element Msg
+section_HelloWorld_AWS model =
+    E.column [ E.width E.fill, E.alignTop ]
+        [ E.text "TODO - Nothing here yet"
         ]
 
 
 headerGCP : E.Element Msg
 headerGCP =
     E.el
-        [ E.width E.fill
-        , E.spacing 20
-        , E.padding 30
-        , Font.center
-        , Font.size 30
-        , Font.shadow { offset = ( 1, 1 ), blur = 2, color = E.rgb255 100 100 100 }
+        [ E.spacing 10
+        , E.padding 10
+        , E.centerX
         ]
     <|
-        E.text "LEFT"
+        E.image [] { src = "./img/gcp.png", description = "Google Cloud logo" }
 
 
 headerAWS : E.Element Msg
 headerAWS =
     E.el
-        [ E.width E.fill
-        , E.spacing 20
-        , E.padding 30
-        , Font.center
-        , Font.size 30
-        , Font.shadow { offset = ( 1, 1 ), blur = 2, color = E.rgb255 100 100 100 }
+        [ E.spacing 20
+        , E.padding 20
+        , E.centerX
         ]
     <|
-        E.text "RIGHT"
-
-
-viewAWS : Model -> E.Element Msg
-viewAWS model =
-    E.column [ E.width E.fill, E.alignTop ] [ headerAWS ]
+        E.image [] { src = "./img/aws.png", description = "AWS logo" }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -162,7 +155,7 @@ header =
     E.el
         [ E.width E.fill
         , E.spacing 20
-        , E.padding 30
+        , E.padding 20
         , Border.innerShadow { offset = ( 1, 1 ), size = 2, blur = 2, color = E.rgba255 100 100 100 0.5 }
         , EB.color <| E.rgb255 57 144 17
         , Font.color <| E.rgb255 255 255 255
@@ -171,4 +164,4 @@ header =
         , Font.shadow { offset = ( 1, 1 ), blur = 2, color = E.rgb255 100 100 100 }
         ]
     <|
-        E.text "Learn Yourself Some Cloud"
+        E.text "Learn Myself Some Cloud"
