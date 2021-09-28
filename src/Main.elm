@@ -9,6 +9,10 @@ import Element.Font as Font
 import Element.Input as EI
 import Html
 import Http
+import Markdown.Block as Block
+import Markdown.Html
+import Markdown.Parser
+import Markdown.Renderer
 import Url exposing (Url)
 import Url.Builder as UrlBuilder
 
@@ -26,8 +30,6 @@ type alias Model =
 
 type Msg
     = DoNothing
-    | CallAPI
-    | HandleHello (Result Http.Error String)
 
 
 initModel : Model
@@ -43,6 +45,17 @@ init flags _ _ =
     ( { initModel | host = flags.host, apiKey = flags.apiKey }, Cmd.none )
 
 
+markdown : String
+markdown =
+    """
+  # Hello World
+
+  ```
+  This is sample code
+  ```
+  """
+
+
 view : Model -> Browser.Document Msg
 view model =
     { title = "lwheng.com - Learn Myself Some Cloud"
@@ -50,48 +63,15 @@ view model =
         [ E.layout [ E.inFront header ] <|
             E.column [ E.width E.fill ]
                 [ header
-                , E.row [ E.width E.fill ] [ headerGCP, headerAWS ]
-                , E.row [ E.width E.fill ] [ section_HelloWorld_GCP model, section_HelloWorld_AWS model ]
+                , case markdownView markdown of
+                    Ok rendered ->
+                        E.column [] rendered
+
+                    Err errs ->
+                        E.text "Error"
                 ]
         ]
     }
-
-
-section_HelloWorld_GCP : Model -> E.Element Msg
-section_HelloWorld_GCP model =
-    E.column [ E.width E.fill, E.alignTop ]
-        [ EI.button [ EB.color <| E.rgb255 238 238 238 ] { onPress = Just CallAPI, label = E.text "Click" }
-        , E.text model.greeting
-        ]
-
-
-section_HelloWorld_AWS : Model -> E.Element Msg
-section_HelloWorld_AWS model =
-    E.column [ E.width E.fill, E.alignTop ]
-        [ E.text "TODO - Nothing here yet"
-        ]
-
-
-headerGCP : E.Element Msg
-headerGCP =
-    E.el
-        [ E.spacing 10
-        , E.padding 10
-        , E.centerX
-        ]
-    <|
-        E.image [] { src = "./img/gcp.png", description = "Google Cloud logo" }
-
-
-headerAWS : E.Element Msg
-headerAWS =
-    E.el
-        [ E.spacing 20
-        , E.padding 20
-        , E.centerX
-        ]
-    <|
-        E.image [] { src = "./img/aws.png", description = "AWS logo" }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -99,17 +79,6 @@ update msg model =
     case msg of
         DoNothing ->
             ( model, Cmd.none )
-
-        CallAPI ->
-            ( model, callAPI model )
-
-        HandleHello res ->
-            case res of
-                Ok v ->
-                    ( { model | greeting = v }, Cmd.none )
-
-                Err err ->
-                    ( { model | greeting = "Error happened!" }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -127,29 +96,6 @@ onUrlChange _ =
     DoNothing
 
 
-callAPI : Model -> Cmd Msg
-callAPI model =
-    let
-        url =
-            { protocol = Url.Https
-            , host = model.host
-            , port_ = Nothing
-            , path = UrlBuilder.absolute [ "hello" ] [ UrlBuilder.string "key" model.apiKey ]
-            , query = Nothing
-            , fragment = Nothing
-            }
-    in
-    Http.request
-        { method = "GET"
-        , headers = []
-        , url = Url.toString <| url
-        , body = Http.emptyBody
-        , expect = Http.expectString HandleHello
-        , timeout = Nothing
-        , tracker = Nothing
-        }
-
-
 header : E.Element Msg
 header =
     E.el
@@ -164,4 +110,46 @@ header =
         , Font.shadow { offset = ( 1, 1 ), blur = 2, color = E.rgb255 100 100 100 }
         ]
     <|
-        E.text "Learn Myself Some Cloud"
+        E.text "lwheng"
+
+
+markdownView : String -> Result String (List (E.Element Msg))
+markdownView md =
+    md
+        |> Markdown.Parser.parse
+        |> Result.mapError (\e -> e |> List.map Markdown.Parser.deadEndToString |> String.join "\n")
+        |> Result.andThen (Markdown.Renderer.render renderer)
+
+
+renderer : Markdown.Renderer.Renderer (E.Element Msg)
+renderer =
+    { heading = heading
+    , paragraph = \_ -> E.text "paragraph"
+    , blockQuote = \_ -> E.text "paragraph"
+    , html = Markdown.Html.oneOf []
+    , text = E.text
+    , codeSpan = \_ -> E.text "codeSpan"
+    , strong = \_ -> E.text "strong"
+    , emphasis = \_ -> E.text "emphasis"
+    , strikethrough = \_ -> E.text "strikethrough"
+    , hardLineBreak = Html.br [] [] |> E.html
+    , link = \_ _ -> E.text "link"
+    , image = \_ -> E.text "image"
+    , unorderedList = \_ -> E.text "unorderedList"
+    , orderedList = \_ _ -> E.text "orderedList"
+    , codeBlock = \_ -> E.text "codeBlock"
+    , thematicBreak = E.none
+    , table = \_ -> E.text "table"
+    , tableHeader = \_ -> E.text "tableHeader"
+    , tableBody = \_ -> E.text "tableBody"
+    , tableRow = \_ -> E.text "tableRow"
+    , tableCell = \_ _ -> E.text "tableCell"
+    , tableHeaderCell = \_ _ -> E.text "tableHeaderCell"
+    }
+
+
+heading : { level : Block.HeadingLevel, rawText : String, children : List (E.Element msg) } -> E.Element msg
+heading { level, rawText, children } =
+    E.paragraph
+        []
+        children
