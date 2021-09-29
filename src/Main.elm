@@ -7,8 +7,14 @@ import Element.Background as EB
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as EI
+import Element.Region as ER
 import Html
+import Html.Attributes as HA
 import Http
+import Markdown.Block as Block
+import Markdown.Html
+import Markdown.Parser
+import Markdown.Renderer
 import Url exposing (Url)
 import Url.Builder as UrlBuilder
 
@@ -26,8 +32,6 @@ type alias Model =
 
 type Msg
     = DoNothing
-    | CallAPI
-    | HandleHello (Result Http.Error String)
 
 
 initModel : Model
@@ -43,55 +47,49 @@ init flags _ _ =
     ( { initModel | host = flags.host, apiKey = flags.apiKey }, Cmd.none )
 
 
+markdown : String
+markdown =
+    """
+# H1
+
+## H2
+
+### H3
+
+#### H4
+
+##### H5
+
+###### H6
+
+The `quick` **brown** __fox__ *jumps* ~~over~~ the lazy dog.
+
+> This is a block quote.
+
+```
+main :: IO ()
+main = putStrLn "Hello, world!"
+```
+"""
+
+
 view : Model -> Browser.Document Msg
 view model =
-    { title = "lwheng.com - Learn Myself Some Cloud"
+    { title = "lwheng.com"
     , body =
         [ E.layout [ E.inFront header ] <|
             E.column [ E.width E.fill ]
                 [ header
-                , E.row [ E.width E.fill ] [ headerGCP, headerAWS ]
-                , E.row [ E.width E.fill ] [ section_HelloWorld_GCP model, section_HelloWorld_AWS model ]
+                , E.el [ E.padding 10, E.width E.fill ] <|
+                    case markdownView markdown of
+                        Ok rendered ->
+                            E.column [ E.width E.fill ] rendered
+
+                        Err errs ->
+                            E.text "Error"
                 ]
         ]
     }
-
-
-section_HelloWorld_GCP : Model -> E.Element Msg
-section_HelloWorld_GCP model =
-    E.column [ E.width E.fill, E.alignTop ]
-        [ EI.button [ EB.color <| E.rgb255 238 238 238 ] { onPress = Just CallAPI, label = E.text "Click" }
-        , E.text model.greeting
-        ]
-
-
-section_HelloWorld_AWS : Model -> E.Element Msg
-section_HelloWorld_AWS model =
-    E.column [ E.width E.fill, E.alignTop ]
-        [ E.text "TODO - Nothing here yet"
-        ]
-
-
-headerGCP : E.Element Msg
-headerGCP =
-    E.el
-        [ E.spacing 10
-        , E.padding 10
-        , E.centerX
-        ]
-    <|
-        E.image [] { src = "./img/gcp.png", description = "Google Cloud logo" }
-
-
-headerAWS : E.Element Msg
-headerAWS =
-    E.el
-        [ E.spacing 20
-        , E.padding 20
-        , E.centerX
-        ]
-    <|
-        E.image [] { src = "./img/aws.png", description = "AWS logo" }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -99,17 +97,6 @@ update msg model =
     case msg of
         DoNothing ->
             ( model, Cmd.none )
-
-        CallAPI ->
-            ( model, callAPI model )
-
-        HandleHello res ->
-            case res of
-                Ok v ->
-                    ( { model | greeting = v }, Cmd.none )
-
-                Err err ->
-                    ( { model | greeting = "Error happened!" }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -127,29 +114,6 @@ onUrlChange _ =
     DoNothing
 
 
-callAPI : Model -> Cmd Msg
-callAPI model =
-    let
-        url =
-            { protocol = Url.Https
-            , host = model.host
-            , port_ = Nothing
-            , path = UrlBuilder.absolute [ "hello" ] [ UrlBuilder.string "key" model.apiKey ]
-            , query = Nothing
-            , fragment = Nothing
-            }
-    in
-    Http.request
-        { method = "GET"
-        , headers = []
-        , url = Url.toString <| url
-        , body = Http.emptyBody
-        , expect = Http.expectString HandleHello
-        , timeout = Nothing
-        , tracker = Nothing
-        }
-
-
 header : E.Element Msg
 header =
     E.el
@@ -164,4 +128,127 @@ header =
         , Font.shadow { offset = ( 1, 1 ), blur = 2, color = E.rgb255 100 100 100 }
         ]
     <|
-        E.text "Learn Myself Some Cloud"
+        E.text "Markdown In Elm"
+
+
+markdownView : String -> Result String (List (E.Element Msg))
+markdownView md =
+    md
+        |> Markdown.Parser.parse
+        |> Result.mapError (\e -> e |> List.map Markdown.Parser.deadEndToString |> String.join "\n")
+        |> Result.andThen (Markdown.Renderer.render renderer)
+
+
+renderer : Markdown.Renderer.Renderer (E.Element Msg)
+renderer =
+    { heading = heading
+    , paragraph = E.paragraph [ E.paddingEach { top = 0, right = 0, bottom = 20, left = 0 } ]
+    , blockQuote =
+        \children ->
+            E.el [ E.paddingEach { top = 0, right = 0, bottom = 20, left = 0 } ] <|
+                E.column
+                    [ Border.color (E.rgb255 145 145 145)
+                    , Border.widthEach { top = 0, right = 0, bottom = 0, left = 10 }
+                    , E.padding 10
+                    , EB.color (E.rgb255 245 245 245)
+                    ]
+                    children
+    , html = Markdown.Html.oneOf []
+    , text = E.text
+    , codeSpan = code
+    , strong = E.row [ Font.bold ]
+    , emphasis = E.row [ Font.italic ]
+    , strikethrough = E.row [ Font.strike ]
+    , hardLineBreak = Html.br [] [] |> E.html
+    , link = \_ _ -> E.text "link"
+    , image = \_ -> E.text "image"
+    , unorderedList = \_ -> E.text "unorderedList"
+    , orderedList = \_ _ -> E.text "orderedList"
+    , codeBlock = codeBlock
+    , thematicBreak = E.none
+    , table = \_ -> E.text "table"
+    , tableHeader = \_ -> E.text "tableHeader"
+    , tableBody = \_ -> E.text "tableBody"
+    , tableRow = \_ -> E.text "tableRow"
+    , tableCell = \_ _ -> E.text "tableCell"
+    , tableHeaderCell = \_ _ -> E.text "tableHeaderCell"
+    }
+
+
+heading : { level : Block.HeadingLevel, rawText : String, children : List (E.Element msg) } -> E.Element msg
+heading { level, rawText, children } =
+    E.paragraph
+        [ Font.size <|
+            case level of
+                Block.H1 ->
+                    48
+
+                Block.H2 ->
+                    36
+
+                Block.H3 ->
+                    30
+
+                Block.H4 ->
+                    26
+
+                Block.H5 ->
+                    20
+
+                Block.H6 ->
+                    18
+        , Font.bold
+        , Font.family
+            [ Font.external
+                { name = "Montserrat"
+                , url = "https://fonts.googleapis.com/css?family=Montserrat"
+                }
+            ]
+        , E.paddingEach { top = 0, right = 0, bottom = 20, left = 0 }
+        , ER.heading (Block.headingLevelToInt level)
+        , E.htmlAttribute
+            (HA.attribute "name" (rawTextToId rawText))
+        , E.htmlAttribute
+            (HA.id (rawTextToId rawText))
+        ]
+        children
+
+
+rawTextToId rawText =
+    rawText
+        |> String.split " "
+        |> String.join "-"
+        |> String.toLower
+
+
+code : String -> E.Element msg
+code snippet =
+    E.el
+        [ EB.color
+            (E.rgba 0 0 0 0.04)
+        , Border.rounded 2
+        , E.paddingXY 5 3
+        , Font.family
+            [ Font.external
+                { url = "https://fonts.googleapis.com/css?family=Source+Code+Pro"
+                , name = "Source Code Pro"
+                }
+            ]
+        ]
+        (E.text snippet)
+
+
+codeBlock : { body : String, language : Maybe String } -> E.Element msg
+codeBlock details =
+    E.el
+        [ EB.color (E.rgba 0 0 0 0.03)
+        , E.htmlAttribute (HA.style "white-space" "pre")
+        , E.padding 20
+        , Font.family
+            [ Font.external
+                { url = "https://fonts.googleapis.com/css?family=Source+Code+Pro"
+                , name = "Source Code Pro"
+                }
+            ]
+        ]
+        (E.text details.body)
