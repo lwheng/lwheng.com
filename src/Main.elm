@@ -70,6 +70,20 @@ The `quick` **brown** __fox__ *jumps* ~~over~~ the lazy dog.
 main :: IO ()
 main = putStrLn "Hello, world!"
 ```
+
+[Google](https://www.google.com.sg)
+
+This is an unordered list:
+- [x] First
+- [x] Second
+- [x] Third
+
+
+This is an ordered list:
+1. First
+2. Second
+3. Third
+
 """
 
 
@@ -160,18 +174,76 @@ renderer =
     , emphasis = E.row [ Font.italic ]
     , strikethrough = E.row [ Font.strike ]
     , hardLineBreak = Html.br [] [] |> E.html
-    , link = \_ _ -> E.text "link"
-    , image = \_ -> E.text "image"
-    , unorderedList = \_ -> E.text "unorderedList"
-    , orderedList = \_ _ -> E.text "orderedList"
+    , link =
+        \{ title, destination } body ->
+            E.newTabLink
+                [ E.htmlAttribute (HA.style "display" "inline-flex") ]
+                { url = destination
+                , label =
+                    E.paragraph
+                        [ Font.color (E.rgb255 0 0 255)
+                        ]
+                        body
+                }
+    , image =
+        \image ->
+            case image.title of
+                Just title ->
+                    E.image [ E.width E.fill ] { src = image.src, description = image.alt }
+
+                Nothing ->
+                    E.image [ E.width E.fill ] { src = image.src, description = image.alt }
+    , unorderedList =
+        \items ->
+            E.column
+                [ E.spacing 15
+                , E.paddingEach { top = 0, right = 0, bottom = 20, left = 0 }
+                ]
+                (items
+                    |> List.map
+                        (\(Block.ListItem task children) ->
+                            E.row [ E.spacing 5 ]
+                                [ E.row
+                                    [ E.alignTop ]
+                                    ((case task of
+                                        Block.IncompleteTask ->
+                                            EI.defaultCheckbox False
+
+                                        Block.CompletedTask ->
+                                            EI.defaultCheckbox True
+
+                                        Block.NoTask ->
+                                            E.text "•"
+                                     )
+                                        :: E.text " "
+                                        :: children
+                                    )
+                                ]
+                        )
+                )
+    , orderedList =
+        \startingIndex items ->
+            E.column [ E.spacing 15 ]
+                (items
+                    |> List.indexedMap
+                        (\index itemBlocks ->
+                            E.row []
+                                (E.el
+                                    [ E.paddingEach { top = 0, right = 0, bottom = 20, left = 0 }
+                                    ]
+                                    (E.text (String.fromInt (index + startingIndex) ++ ". "))
+                                    :: Debug.log "itemBlocks" itemBlocks
+                                )
+                        )
+                )
     , codeBlock = codeBlock
     , thematicBreak = E.none
-    , table = \_ -> E.text "table"
-    , tableHeader = \_ -> E.text "tableHeader"
-    , tableBody = \_ -> E.text "tableBody"
-    , tableRow = \_ -> E.text "tableRow"
-    , tableCell = \_ _ -> E.text "tableCell"
-    , tableHeaderCell = \_ _ -> E.text "tableHeaderCell"
+    , table = E.column []
+    , tableHeader = E.column []
+    , tableBody = E.column []
+    , tableRow = E.row []
+    , tableCell = \maybeAlignment children -> E.paragraph [] children
+    , tableHeaderCell = \maybeAlignment children -> E.paragraph [] children
     }
 
 
@@ -240,15 +312,16 @@ code snippet =
 
 codeBlock : { body : String, language : Maybe String } -> E.Element msg
 codeBlock details =
-    E.el
-        [ EB.color (E.rgba 0 0 0 0.03)
-        , E.htmlAttribute (HA.style "white-space" "pre")
-        , E.padding 20
-        , Font.family
-            [ Font.external
-                { url = "https://fonts.googleapis.com/css?family=Source+Code+Pro"
-                , name = "Source Code Pro"
-                }
+    E.el [ E.paddingEach { top = 0, right = 0, bottom = 20, left = 0 } ] <|
+        E.el
+            [ EB.color (E.rgba 0 0 0 0.03)
+            , E.htmlAttribute (HA.style "white-space" "pre")
+            , E.padding 20
+            , Font.family
+                [ Font.external
+                    { url = "https://fonts.googleapis.com/css?family=Source+Code+Pro"
+                    , name = "Source Code Pro"
+                    }
+                ]
             ]
-        ]
-        (E.text details.body)
+            (E.text details.body)
