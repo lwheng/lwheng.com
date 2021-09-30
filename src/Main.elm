@@ -232,7 +232,7 @@ renderer =
                                     [ E.paddingEach { top = 0, right = 0, bottom = 20, left = 0 }
                                     ]
                                     (E.text (String.fromInt (index + startingIndex) ++ ". "))
-                                    :: Debug.log "itemBlocks" itemBlocks
+                                    :: itemBlocks
                                 )
                         )
                 )
